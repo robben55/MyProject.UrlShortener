@@ -4,14 +4,12 @@ using UrlShortener.Entities;
 using UrlShortener.Extensions;
 using UrlShortener.Models;
 using UrlShortener.Services;
-using Microsoft.Extensions.Caching.Memory;
-
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddMemoryCache();
+
 builder.Services.AddDbContext<ApplicationDbContext>(s =>
     s.UseNpgsql(builder.Configuration.GetConnectionString("Database")));
 
@@ -35,8 +33,7 @@ if (app.Environment.IsDevelopment())
 app.MapPost("api/shorten", async (ShortenUrlRequest request,
         UrlShorteningService shorteningService,
         ApplicationDbContext applicationDbContext,
-        HttpContext httpContext,
-        IMemoryCache cache) =>
+        HttpContext httpContext) =>
 {
     if (!Uri.TryCreate(request.Url, UriKind.Absolute, out _))
     {
@@ -54,10 +51,6 @@ app.MapPost("api/shorten", async (ShortenUrlRequest request,
         CreatedOnUtc = DateTime.UtcNow
     };
 
-    var key = $"{shortenedUrl.Code}";
-    cache.Set(key, shortenedUrl, new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromMinutes(2)));
-
-
     await applicationDbContext.ShortenedUrls.AddAsync(shortenedUrl);
 
     await applicationDbContext.SaveChangesAsync();
@@ -68,22 +61,12 @@ app.MapPost("api/shorten", async (ShortenUrlRequest request,
 
 
 app.MapGet("api/{code}", async (string code,
-    ApplicationDbContext dbContext, 
-    IMemoryCache cache) =>
+    ApplicationDbContext dbContext) =>
 {
-    cache.TryGetValue(code, out ShortenedUrl? url);
-    if (url is not null) return Results.Redirect(url.LongUrl);
-    var shortenedUrl = await dbContext.ShortenedUrls.FirstOrDefaultAsync(s => s.Code == code);
+    var shortenedUrl = await dbContext.ShortenedUrls
+        .FirstOrDefaultAsync(s => s.Code == code);
 
-    if (shortenedUrl is null)
-    {
-        return Results.NotFound();
-    }
-
-    cache.Set(code, shortenedUrl, new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromMinutes(2)));
-
-    return Results.Redirect(shortenedUrl.LongUrl);
-
+    return shortenedUrl is null ? Results.NotFound() : Results.Redirect(shortenedUrl.LongUrl);
 });
 
 app.UseHttpsRedirection();
