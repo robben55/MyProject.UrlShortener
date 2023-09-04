@@ -13,6 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 builder.Services.AddDbContext<ApplicationDbContext>(s =>
@@ -35,7 +36,7 @@ if (app.Environment.IsDevelopment())
     app.ApplyMigrations();
 }
 
-app.MapPost("api/shorten", async (ShortenUrlRequest request,
+/*app.MapPost("api/shorten", async (ShortenUrlRequest request,
         UrlShorteningService shorteningService,
         ApplicationDbContext applicationDbContext,
         HttpContext httpContext) =>
@@ -62,8 +63,11 @@ app.MapPost("api/shorten", async (ShortenUrlRequest request,
 
     return Results.Ok(shortenedUrl.ShortUrl);
 
-});
+});*/
 
-app.GetLongUrl<CodeRequest>("/api/{code}");
+app.MakeUrlShort<ShortenUrlRequest>("api/shorten");
+app.GetLongUrl<CodeRequest>("api/{code}");
+
+
 app.UseHttpsRedirection();
 app.Run();
