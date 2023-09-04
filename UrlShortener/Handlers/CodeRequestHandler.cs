@@ -19,7 +19,6 @@ public class CodeRequestHandler : IRequestHandler<CodeRequest, IResult>
         var shortenedUrl = await _context.ShortenedUrls
             .FirstOrDefaultAsync(s => s.Code == request.Code, cancellationToken);
 
-        
         switch (shortenedUrl)
         {
             case null:
@@ -28,16 +27,14 @@ public class CodeRequestHandler : IRequestHandler<CodeRequest, IResult>
                 return Results.Redirect(shortenedUrl.LongUrl);
         }
 
-        
-
-        if (shortenedUrl!.NumberOfRedirection >= shortenedUrl.LimitOfRedirection ||  shortenedUrl.NumberOfRedirection == shortenedUrl.LimitOfRedirection)
-            return Results.Problem(title: "Out of redirections limit.", detail: "user created this link set up limit for redirection. sorry!"); // true
+        if (shortenedUrl!.NumberOfRedirection >= shortenedUrl.LimitOfRedirection ||
+            shortenedUrl.NumberOfRedirection == shortenedUrl.LimitOfRedirection)
+            return Results.BadRequest(error: "Allowed limit of redirection is finished"); // true
         {
             await _context.ShortenedUrls.ExecuteUpdateAsync(s =>
                 s.SetProperty(s => s.NumberOfRedirection, s => s.NumberOfRedirection + 1), cancellationToken);
 
             return Results.Redirect(shortenedUrl.LongUrl);
         }//false
-
     }
 }
