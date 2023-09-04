@@ -36,35 +36,6 @@ if (app.Environment.IsDevelopment())
     app.ApplyMigrations();
 }
 
-/*app.MapPost("api/shorten", async (ShortenUrlRequest request,
-        UrlShorteningService shorteningService,
-        ApplicationDbContext applicationDbContext,
-        HttpContext httpContext) =>
-{
-    if (!Uri.TryCreate(request.Url, UriKind.Absolute, out _))
-    {
-        return Results.BadRequest("The specified URL is invalid.");
-    }
-
-    var code = await shorteningService.GenerateUniqueCode();
-
-    var shortenedUrl = new ShortenedUrl
-    {
-        Id = Guid.NewGuid(),
-        LongUrl = request.Url,
-        Code = code,
-        ShortUrl = $"{httpContext.Request.Scheme}://{httpContext.Request.Host}/api/{code}",
-        CreatedOnUtc = DateTime.UtcNow
-    };
-
-    await applicationDbContext.ShortenedUrls.AddAsync(shortenedUrl);
-
-    await applicationDbContext.SaveChangesAsync();
-
-    return Results.Ok(shortenedUrl.ShortUrl);
-
-});*/
-
 app.MakeUrlShort<ShortenUrlRequest>("api/shorten");
 app.GetLongUrl<CodeRequest>("api/{code}");
 
