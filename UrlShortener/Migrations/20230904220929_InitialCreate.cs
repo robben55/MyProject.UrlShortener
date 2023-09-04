@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace UrlShortener.Migrations
 {
     /// <inheritdoc />
-    public partial class myMigration : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -19,6 +19,8 @@ namespace UrlShortener.Migrations
                     LongUrl = table.Column<string>(type: "text", nullable: false),
                     ShortUrl = table.Column<string>(type: "text", nullable: false),
                     Code = table.Column<string>(type: "character varying(7)", maxLength: 7, nullable: false),
+                    LimitOfRedirection = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    NumberOfRedirection = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
                     CreatedOnUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>

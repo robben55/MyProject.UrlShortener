@@ -17,9 +17,27 @@ public class CodeRequestHandler : IRequestHandler<CodeRequest, IResult>
         CancellationToken cancellationToken)
     {
         var shortenedUrl = await _context.ShortenedUrls
-                .FirstOrDefaultAsync(s => s.Code == request.Code, cancellationToken);
+            .FirstOrDefaultAsync(s => s.Code == request.Code, cancellationToken);
 
-        return shortenedUrl is null ? Results.NotFound() : Results.Redirect(shortenedUrl.LongUrl);
+        
+        switch (shortenedUrl)
+        {
+            case null:
+                return Results.NotFound();
+            case { NumberOfRedirection: 0, LimitOfRedirection: 0 }:
+                return Results.Redirect(shortenedUrl.LongUrl);
+        }
+
+        
+
+        if (shortenedUrl!.NumberOfRedirection >= shortenedUrl.LimitOfRedirection ||  shortenedUrl.NumberOfRedirection == shortenedUrl.LimitOfRedirection)
+            return Results.Problem(title: "Out of redirections limit.", detail: "user created this link set up limit for redirection. sorry!"); // true
+        {
+            await _context.ShortenedUrls.ExecuteUpdateAsync(s =>
+                s.SetProperty(s => s.NumberOfRedirection, s => s.NumberOfRedirection + 1), cancellationToken);
+
+            return Results.Redirect(shortenedUrl.LongUrl);
+        }//false
 
     }
 }

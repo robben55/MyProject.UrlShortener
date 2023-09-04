@@ -12,8 +12,8 @@ using UrlShortener;
 namespace UrlShortener.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230901165742_myMigration")]
-    partial class myMigration
+    [Migration("20230904220929_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -39,9 +39,19 @@ namespace UrlShortener.Migrations
                     b.Property<DateTime>("CreatedOnUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("LimitOfRedirection")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
                     b.Property<string>("LongUrl")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("NumberOfRedirection")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
 
                     b.Property<string>("ShortUrl")
                         .IsRequired()

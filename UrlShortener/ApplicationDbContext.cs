@@ -17,9 +17,10 @@ public class ApplicationDbContext : DbContext
     {
         modelBuilder.Entity<ShortenedUrl>(builder =>
         {
-
             builder.Property(s => s.Code).HasMaxLength(UrlShorteningService.NumberOfCharsInShortLink);
             builder.HasIndex(s => s.Code).IsUnique();
+            builder.Property(s => s.LimitOfRedirection).HasDefaultValue(0);
+            builder.Property(s => s.NumberOfRedirection).HasDefaultValue(0);
         });
     }
 }

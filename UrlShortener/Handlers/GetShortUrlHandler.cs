@@ -25,13 +25,13 @@ public class GetShortUrlHandler : IRequestHandler<ShortenUrlRequest, IResult>
         {
             return Results.BadRequest("The specified URL is invalid");
         }
-
         var code = await _urlShorteningService.GenerateUniqueCode();
         var shortenedUrl = new ShortenedUrl
         {
             Id = Guid.NewGuid(),
             LongUrl = request.Url,
             Code = code,
+            LimitOfRedirection = request.LimitOfRedirection,
             ShortUrl = $"{_accessor.HttpContext!.Request.Scheme}://{_accessor.HttpContext.Request.Host}/api/{code}",
             CreatedOnUtc = DateTime.UtcNow
         };
@@ -40,7 +40,7 @@ public class GetShortUrlHandler : IRequestHandler<ShortenUrlRequest, IResult>
         await _context.SaveChangesAsync(cancellationToken);
         return Results.Ok(new
         {
-            message = shortenedUrl.ShortUrl
+            Link = shortenedUrl.ShortUrl
         });
     }
 }

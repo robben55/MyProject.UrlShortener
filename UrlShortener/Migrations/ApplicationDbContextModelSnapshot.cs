@@ -36,9 +36,19 @@ namespace UrlShortener.Migrations
                     b.Property<DateTime>("CreatedOnUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("LimitOfRedirection")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
                     b.Property<string>("LongUrl")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("NumberOfRedirection")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
 
                     b.Property<string>("ShortUrl")
                         .IsRequired()
