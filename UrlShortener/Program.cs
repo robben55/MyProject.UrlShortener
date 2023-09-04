@@ -6,6 +6,7 @@ using UrlShortener.Models;
 using UrlShortener.Services;
 using Microsoft.Extensions.Caching.Memory;
 using System;
+using UrlShortener.Request;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,11 +14,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddMemoryCache();
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 builder.Services.AddDbContext<ApplicationDbContext>(s =>
     s.UseNpgsql(builder.Configuration.GetConnectionString("Database")));
 
-builder.Services.AddScoped<UrlShorteningService>(); // потому что инжектится еф коре который есть скопед
-
+builder.Services.AddScoped<UrlShorteningService>();
 
 var app = builder.Build();
 
@@ -28,6 +29,7 @@ if (app.Environment.IsDevelopment())
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
         c.RoutePrefix = string.Empty;
+        c.DisplayRequestDuration();
     });
 
     app.ApplyMigrations();
@@ -36,8 +38,7 @@ if (app.Environment.IsDevelopment())
 app.MapPost("api/shorten", async (ShortenUrlRequest request,
         UrlShorteningService shorteningService,
         ApplicationDbContext applicationDbContext,
-        HttpContext httpContext,
-        IMemoryCache cache) =>
+        HttpContext httpContext) =>
 {
     if (!Uri.TryCreate(request.Url, UriKind.Absolute, out _))
     {
@@ -55,8 +56,6 @@ app.MapPost("api/shorten", async (ShortenUrlRequest request,
         CreatedOnUtc = DateTime.UtcNow
     };
 
-    cache.Set($"{shortenedUrl.Code}", shortenedUrl, TimeSpan.FromMinutes(2));
-
     await applicationDbContext.ShortenedUrls.AddAsync(shortenedUrl);
 
     await applicationDbContext.SaveChangesAsync();
@@ -65,30 +64,6 @@ app.MapPost("api/shorten", async (ShortenUrlRequest request,
 
 });
 
-
-app.MapGet("api/{code}", async (string code,
-    ApplicationDbContext dbContext,
-    IMemoryCache cache) =>
-{
-    cache.TryGetValue(code, out ShortenedUrl? shortenedUrl);
-
-    if (shortenedUrl is not null) return Results.Redirect(shortenedUrl.LongUrl);
-    var url = await dbContext.ShortenedUrls
-        .FirstOrDefaultAsync(s => s.Code == code);
-    if (url is null)
-    {
-        return Results.NotFound();
-    }
-
-    cache.Set(code, url, TimeSpan.FromMinutes(2));
-    return Results.Redirect(url.LongUrl);
-
-});
-
-
-
+app.GetLongUrl<CodeRequest>("/api/{code}");
 app.UseHttpsRedirection();
 app.Run();
-
-
-
